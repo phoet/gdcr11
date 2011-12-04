@@ -1,8 +1,11 @@
+#!/usr/bin/env ruby
+require 'rspec'
+
 class Generation
   attr_accessor :board
 
   def initialize
-    @board = Board.new
+    @board = Board.new(20)
     @board.seed
   end
 
@@ -19,8 +22,8 @@ class Generation
     self
   end
 
-  def to_s
-    "<p>#{@board.to_s('<br>')}</p>"
+  def to_s(type=:html)
+    type == :html ? "<p>#{@board.to_s('<br>')}</p>" : "#{@board}"
   end
 end
 
@@ -219,5 +222,15 @@ XXXXXXXXXX"
     it "should have a string representation" do
       cell.to_s.should eql("X")
     end
+  end
+end
+
+if __FILE__ == $PROGRAM_NAME
+  g = Generation.new
+  puts g.to_s(:plain)
+  10.times.each do
+    sleep(1)
+    puts ""
+    puts g.next.to_s(:plain)
   end
 end
