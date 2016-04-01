@@ -4,8 +4,8 @@ require 'rspec'
 class Generation
   attr_accessor :board
 
-  def initialize
-    @board = Board.new(20)
+  def initialize(width=20)
+    @board = Board.new(width)
     @board.seed
   end
 
@@ -54,6 +54,7 @@ class Board
   def seed
     @cells.each do |row|
       @size.times { row[rand(@size)].status = :full }
+      @size.times { row[rand(@size)].status = :empty }
     end
   end
 
@@ -88,7 +89,7 @@ class Cell
   end
 
   def to_s
-    @status == :empty ? 'X' : 'O'
+    @status == :empty ? ' ' : 'O'
   end
 end
 
@@ -145,10 +146,48 @@ describe Board do
 
   context "generation" do
     let(:generation) { Generation.new }
+    let(:block) { Board.new(4).tap {|it| it.cells[1][1].status = :full; it.cells[1][2].status = :full; it.cells[2][1].status = :full; it.cells[2][2].status = :full} }
+    let(:beehive) { Board.new(6).tap {|it| it.cells[1][2].status = :full; it.cells[1][3].status = :full; it.cells[2][1].status = :full; it.cells[2][4].status = :full; it.cells[3][2].status = :full; it.cells[3][3].status = :full; } }
     let(:flipper) { Board.new(3).tap {|it| it.cells[1][0].status = :full; it.cells[1][1].status = :full; it.cells[1][2].status = :full} }
 
     it "should create a generation" do
       generation.should_not be_nil
+    end
+
+    it "should have a beehive" do
+      generation.board = beehive
+      generation.board.to_s.should eql(
+        "XXXXXX
+XXOOXX
+XOXXOX
+XXOOXX
+XXXXXX
+XXXXXX"
+      )
+      generation.next.board.to_s.should eql(
+        "XXXXXX
+XXOOXX
+XOXXOX
+XXOOXX
+XXXXXX
+XXXXXX"
+      )
+    end
+
+    it "should have a block" do
+      generation.board = block
+      generation.board.to_s.should eql(
+        "XXXX
+XOOX
+XOOX
+XXXX"
+      )
+      generation.next.board.to_s.should eql(
+        "XXXX
+XOOX
+XOOX
+XXXX"
+      )
     end
 
     it "should have a flipper" do
@@ -164,7 +203,6 @@ XOX
 XOX"
       )
     end
-
   end
 
   context "board" do
@@ -225,12 +263,13 @@ XXXXXXXXXX"
   end
 end
 
+# ruby spec/life_spec.rb $(tput cols)
 if __FILE__ == $PROGRAM_NAME
-  g = Generation.new
+  width = ARGV[0].to_i || 20
+  g = Generation.new(width)
   puts g.to_s(:plain)
-  10.times.each do
-    sleep(1)
-    puts ""
+  loop do
+    sleep(0.1)
     puts g.next.to_s(:plain)
   end
 end
